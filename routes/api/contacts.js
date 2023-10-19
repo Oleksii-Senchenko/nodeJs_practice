@@ -1,8 +1,8 @@
 const express = require("express");
-const { Contact } = require("../../models/contacts");
-const { isValidId } = require("../../middlewares/isValidId");
-const { addSchema } = require("../../schema/conacts");
+const Contact = require("../../models/contacts");
+const isValidId = require("../../middlewares/isValidId");
 const HttpError = require("../../helpers/HttpError");
+const addSchema = require("../../schemaJOI/conacts");
 
 const router = express.Router();
 
@@ -21,9 +21,8 @@ router.get("/:contactId", isValidId, async (req, res, next) => {
 
     const result = await Contact.findById(contactId);
     if (!result) {
-      throw HttpError(404, error.message);
+      throw HttpError(404, "not found");
     }
-
     res.json(result);
   } catch (error) {
     next(error);
@@ -34,40 +33,62 @@ router.post("/", async (req, res, next) => {
   try {
     const { error } = addSchema.validate(req.body);
     if (error) {
-      throw HttpError(400, error.message);
+      throw HttpError(400);
     }
-
     const result = await Contact.create(req.body);
-    res.status(201).json(result);
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.delete("/:contactId", async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-
-    const result = await Contact.findByIdAndRemove(contactId);
     if (!result) {
-      throw HttpError(404, "not found");
+      throw HttpError(400);
     }
-    res.json({ message: "contact deleted" });
+    res.json(result);
   } catch (error) {
     next(error);
   }
 });
 
-router.put("/:contactId", async (req, res, next) => {
+router.put("/:contactId", isValidId, async (req, res, next) => {
   try {
-    const { error } = addSchema.validate(req.body);
-    if (error) {
-      throw HttpError(400, error.message);
-    }
+      const { error } = addSchema.validate(req.body);
+      if (error) {
+        throw HttpError(400);
+      }
     const { contactId } = req.params;
     const result = await Contact.findByIdAndUpdate(contactId, req.body, {
       new: true,
     });
+    if (!result) {
+      throw HttpError(404);
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+router.patch("/:contactId", isValidId, async (req, res, next) => {
+  try {
+      const { error } = addSchema.validate(req.body);
+      if (error) {
+        throw HttpError(400);
+      }
+    const { contactId } = req.params;
+    const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+      new: true,
+    });
+    if (!result) {
+      throw HttpError(404);
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+router.delete("/:contactId", isValidId, async (req, res, next) => {
+  try {
+    
+    const { contactId } = req.params;
+    const result = await Contact.findByIdAndRemove(contactId);
+    if (!result) {
+      throw HttpError(404);
+    }
     res.json(result);
   } catch (error) {
     next(error);
