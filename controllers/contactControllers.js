@@ -1,5 +1,5 @@
 const HttpError = require("../helpers/HttpError");
-const tryHandler = require("../helpers/tryCathHandler");
+const tryHandler = require("../middlewares/tryCathHandler");
 const Contact = require("../models/contacts");
 const addSchema = require("../schemaJOI/conacts");
 
@@ -23,7 +23,7 @@ class ContactController {
   add = tryHandler(async (req, res, next) => {
     const { error } = addSchema.validate(req.body);
     if (error) {
-      throw HttpError(400);
+      throw HttpError(400, error.message);
     }
     const result = await Contact.create(req.body);
     if (!result) {

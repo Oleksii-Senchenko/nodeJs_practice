@@ -1,23 +1,18 @@
 const express = require("express");
-const Contact = require("../../models/contacts");
-const isValidId = require("../../middlewares/isValidId");
-const HttpError = require("../../helpers/HttpError");
-const addSchema = require("../../schemaJOI/conacts");
+
 const contactControllers = require("../../controllers/contactControllers");
+const authenticate = require("../../middlewares/authenticate");
 const router = express.Router();
 
-router.get("/", contactControllers.getAll);
+router.get("/", authenticate, contactControllers.getAll);
 
+router.get("/:contactId", authenticate, contactControllers.getById);
 
-router.get("/:contactId", contactControllers.getById
-);
+router.post("/", authenticate, contactControllers.add);
 
-router.post("/", contactControllers.add);
+router.put("/:contactId", authenticate, contactControllers.update);
+router.patch("/:contactId", authenticate, contactControllers.update);
 
-router.put("/:contactId", contactControllers.update);
-router.patch("/:contactId", contactControllers.update);
-
-
-router.delete("/:contactId",contactControllers.remove);
+router.delete("/:contactId", authenticate, contactControllers.remove);
 
 module.exports = router;
