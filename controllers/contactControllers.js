@@ -5,7 +5,8 @@ const addSchema = require("../schemaJOI/conacts");
 
 class ContactController {
   getAll = tryHandler(async (req, res, next) => {
-    const result = await Contact.find();
+    const { _id: owner } = req.user;
+    const result = await Contact.find({owner});
     res.status(200);
     res.json({ code: 200, message: "ok", data: result, qty: result.length });
   });
@@ -21,11 +22,15 @@ class ContactController {
   });
 
   add = tryHandler(async (req, res, next) => {
+    
     const { error } = addSchema.validate(req.body);
     if (error) {
       throw HttpError(400, error.message);
     }
-    const result = await Contact.create(req.body);
+
+    const { _id: owner } = req.user;
+
+    const result = await Contact.create({ ...req.body, owner });
     if (!result) {
       throw HttpError(400);
     }

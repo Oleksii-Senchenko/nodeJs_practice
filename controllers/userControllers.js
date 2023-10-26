@@ -1,27 +1,39 @@
-const jwt = require("jsonwebtoken");
 const HttpError = require("../helpers/HttpError");
 const tryHandler = require("../middlewares/tryCathHandler");
-const User = require("../models/auth");
 const bcrypt = require("bcryptjs");
-const { SECRET_KEY } = process.env;
+const User = require("../models/auth");
+const gravatar = require("gravatar");
+const fs = require("fs");
+const path = require("path");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-class UserControllers {
+const { SECRET_KEY } = process.env;
+class UserController {
   register = tryHandler(async (req, res, next) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
+
     if (user) {
       throw HttpError(409, "Email in use");
     }
 
-    const hashPass = await bcrypt.hash(password, 10);
+    const hashpass = await bcrypt.hash(password, 10);
 
-    const newUser = await User.create({ ...req.body, password: hashPass });
+    const avatarURL = gravatar.url(email);
+
+    const newUser = await User.create({
+      ...req.body,
+      password: hashpass,
+      avatarURL,
+    });
     res.status(201).json({
-      user: {
+      status: 201,
+      data: {
         email: newUser.email,
-        subscription: newUser.subscription,
+        subscription: newUser.subscriprion,
+        avatarURL,
       },
     });
   });
@@ -31,37 +43,61 @@ class UserControllers {
 
     const user = await User.findOne({ email });
     if (!user) {
-      throw HttpError(409, "Email or password is wrong");
+      throw HttpError(401, "Password or Email is wrong");
     }
 
     const comparePass = await bcrypt.compare(password, user.password);
 
     if (!comparePass) {
-      throw HttpError(409, "Email or password is wrong");
+      throw HttpError(401, "Password or Email is wrong");
     }
 
     const token = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: "12h" });
 
     await User.findByIdAndUpdate(user._id, { token });
+
     res.json({
-      token,
-      user: {
+      status: 201,
+      data: {
         email: user.email,
-        subscription: user.subscription,
+        subscriprion: user.subscriprion,
+        token,
       },
     });
   });
-  logout = tryHandler(async (req, res, next) => {
-    const { _id } = req.user;
-    await User.findByIdAndUpdate(_id, { token: null });
-    res.status(204).json();
-  });
-  current = tryHandler(async (req, res, next) => {
-    const { email, subscription } = req.user;
+
+  current = async (req, res, next) => {
+    const { subscriprion, email } = req.user;
+
     res.json({
-      email,
-      subscription,
+      code: 200,
+      data: {
+        user: {
+          email,
+          subscriprion,
+        },
+      },
+    });
+  };
+  updateAvatar = tryHandler(async (req, res, next) => {
+    const { path: tempFile, filename } = req.file;
+
+    const resultUpload = path.join(
+      __dirname,
+      "../",
+      "public",
+      "avatars",
+      filename
+    );
+
+    await fs.renameSync(tempFile, resultUpload);
+
+    const avatarURL = path.join("public", "avatars", filename);
+
+    res.json({
+      avatarURL,
     });
   });
 }
-module.exports = new UserControllers();
+
+module.exports = new UserController();
