@@ -1,10 +1,4 @@
-const errorMessageList = {
-  400: "Bed request",
-  401: "Unauthorized",
-  403: "Forbiden",
-  404: "Not Found",
-  409: "Conflict",
-};
+
 
 const HttpError = (status, message) => {
   const error = new Error(message);

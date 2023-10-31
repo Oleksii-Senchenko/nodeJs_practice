@@ -19,13 +19,11 @@ class UserController {
       throw HttpError(409, "Email in use");
     }
 
-    const hashpass = await bcrypt.hash(password, 10);
-
+    const hashPass = await bcrypt.hash(password, 10);
     const avatarURL = gravatar.url(email);
-
     const newUser = await User.create({
       ...req.body,
-      password: hashpass,
+      password: hashPass,
       avatarURL,
     });
     res.status(201).json({
